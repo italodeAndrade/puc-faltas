@@ -12,8 +12,8 @@ def cadastrar_user():
 
 def logar_user(id_user):
     login_vld= False
-    usuario= str(input("insira o seu nome de usuario: "))
-    senha = str(input("insira a sua senha: "))
+    usuario= (input("insira o seu nome de usuario: "))
+    senha = (input("insira a sua senha: "))
     
     try:
         cursor.execute("SELECT * FROM usuarios WHERE nome = ? && senha= ?"(usuario, senha))
@@ -28,24 +28,22 @@ def logar_user(id_user):
     return login_vld
         
     
-def criar_materia(nome):
+def criar_materia(aluno_ID):
+    nome= input("insira o nome da matéria: ")
     carga_horaria=input("insira a carga horaria da matéria: ")
     quantidade_falta= input("insira a sua quantidade de faltas: ")
-    aluno =nome
-    with open('files/materias.txt', 'w') as matérias_arquivo:
-        linha= f"{aluno} , {carga_horaria} , {quantidade_falta}"
-        matérias_arquivo.write(linha)
+    cursor.execute("INSERT INTO materias(nome_mtr, crg_horaria,flts_aluno,id_usuario) values (?,?,?,?) ",(nome,carga_horaria,quantidade_falta,aluno_ID))
   
 
 
   
 
-while true:
+while True:
     conn = sqlite3.connect('usuarios.db')            
     cursor= conn.cursor
     cursor.execute("PRAGMA foreign_keys = ON;")
     cursor.execute( "CREATE TABLE usuarios (id INTERGER PRIMARY KEY AUTOINCREMENT , nome text not null, senha varchar not null)")
-    cursor.execute("CREATE TABLE materias (id INTERGER PRIMARY KEY AUTOINCREMENT, nome_mtr TEXT NOT NULL, FOREING KEY (id_usuario) REFERENCE usuarios(id)")
+    cursor.execute("CREATE TABLE materias (id INTERGER PRIMARY KEY AUTOINCREMENT,nome_mtr TEXT NOT NULL,crg_horaria INTERGER NOT NULL,flts_aluno INTERGER NOT NULL, FOREING KEY (id_usuario) REFERENCE usuarios(id)")
     
     
     
