@@ -16,7 +16,7 @@ def logar_user(id_user):
     senha = (input("insira a sua senha: "))
     
     try:
-        cursor.execute("SELECT * FROM usuarios WHERE nome = ? && senha= ?"(usuario, senha))
+        cursor.execute("SELECT * FROM usuarios WHERE nome = ?AND senha= ?"(usuario, senha))
         if cursor.fetchone():
             cursor.execute("SELECT id FROM usuarios WHERE nome = ?"(usuario,))
             id_user=cursor.fetchone()
@@ -28,15 +28,64 @@ def logar_user(id_user):
     return login_vld
         
     
-def criar_materia(aluno_ID):
+def listar_mtr(id_user):
+    cusor.execute("SELECT nome_mtr FROM materias WHERE id_usuario = ? ",(id_user,))
+    materias = cursor.fetchall()
+    if materias:
+        for materia in materias:
+            print(materia[0])
+    else :
+        print("nenhuma matéria encontrada")
+
+def criar_mtr(id_user):
     nome= input("insira o nome da matéria: ")
     carga_horaria=input("insira a carga horaria da matéria: ")
     quantidade_falta= input("insira a sua quantidade de faltas: ")
-    cursor.execute("INSERT INTO materias(nome_mtr, crg_horaria,flts_aluno,id_usuario) values (?,?,?,?) ",(nome,carga_horaria,quantidade_falta,aluno_ID))
+    try:
+        cursor.execute("INSERT INTO materias(nome_mtr, crg_horaria,flts_aluno,id_usuario) values (?,?,?,?) ",(nome,carga_horaria,quantidade_falta,id_user))
+        conn.commit()
+        print("inserção realizada com sucesso!!")
+    except sqlite3.Error as e:
+        print(f"erro ao inserir os dados {e}")
+    
+def excluir_mtr(id_user):
+    listar_mtr(id_user)
+    esclh=input("qual matéria você gostaria de excluir?: ")
+    if esclh:
+        print("excluindo matéria")
+        cursor.execute("DELETE FROM materias WHERE nome_mtr = ? AND id_usuario = ?",(esclh, id_user))
+    else:
+        print("!!ocorreu um erro na operação!!")
+
+def add_flt(id_user):
+    listar_mtr(id_user)
+    esclh= input("qual matéria você gostaria de adicionar falta? ")
+    faltas= input("quantas faltas você gostaria de adicionar? ")
+    if esclh & faltas:
+        print(f"adicionando {flatas} faltas na matéria: {esclh}")
+        cursor.execute("ALTER materias SET flts_aluno = flts_aluno + ? WHERE id_usuario = ? AND nome_mtr = ?",(faltas,id_user , esclh))
+    else:
+        print("!!ocorreu um erro na operação!!")
+
+def tirar_flt(id_user):
+    istar_mtr(id_user)
+    esclh= input("qual matéria você gostaria de tirar falta? ")
+    faltas= input("quantas faltas você gostaria de tirar? ")
+    if esclh & faltas:
+        print(f"adicionando {flatas} faltas na matéria: {esclh}")
+        cursor.execute("ALTER materias SET flts_aluno = flts_aluno - ? WHERE id_usuario = ? AND nome_mtr = ?",(faltas,id_user , esclh))
+    else:
+        print("!!ocorreu um erro na operação!!")
+
   
 
-
-  
+def main_func():
+    id_user = None
+    while True:
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        print(f"1- login \n 2- cadastro")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        sclh= input("escolha operação: ")
 
 while True:
     conn = sqlite3.connect('usuarios.db')            
