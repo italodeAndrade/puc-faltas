@@ -6,34 +6,48 @@ import sqlite3
 
 def cadastrar_user():
     usuario=input("insira o seu usuario")
-    senha=input("insira a sua senha")
-    cursor.execute(" INSERT INTO usuarios values (? , ?)" , (usuario, senha))
+    senha=getpass.getpass(prompt='insira a sua senha: ', stream=None)
+    senha2= getpass.getpass(prompt='insira novamente sua senha: ', stream=None)
+
+    while senha != senha2:
+        print("!!as senhas inseridas não estão iguais!!")
+        senha=getpass.getpass(prompt='insira a sua senha: ', stream=None)
+        senha2= getpass.getpass(prompt='insira novamente sua senha: ', stream=None)
+        if usuario == 0 or senha == 0 :
+            break
+    if senha == senha2 :
+        cursor.execute(" INSERT INTO usuarios values (? , ?)" , (usuario, senha))
+    
     
 
 def logar_user(id_user):
     login_vld= False
     usuario= (input("insira o seu nome de usuario: "))
-    senha = (input("insira a sua senha: "))
-    
-    try:
-        cursor.execute("SELECT * FROM usuarios WHERE nome = ?AND senha= ?"(usuario, senha))
-        if cursor.fetchone():
-            cursor.execute("SELECT id FROM usuarios WHERE nome = ?"(usuario,))
-            id_user=cursor.fetchone()
-            login_vld= True
-            print(f"!! bem vindo {usuario} !!")
-        
-    except Exception as e:
-        print(f"ocorreu um erro : {e}")
-    return login_vld
-        
+    senha = getpass.getpass(prompt='insira a sua senha: ', stream=None)
+
+    if usuario != 0 or senha != 0 :
+        try:
+            cursor.execute("SELECT * FROM usuarios WHERE nome = ?AND senha= ?"(usuario, senha))
+            if cursor.fetchone():
+                cursor.execute("SELECT id FROM usuarios WHERE nome = ?"(usuario,))
+                id_user=cursor.fetchone()
+                login_vld= True
+                print(f"!! bem vindo {usuario} !!")
+                return True
+            
+        except Exception as e:
+            print(f"ocorreu um erro : {e}")
+        return login_vld
+    else:
+        print("cancelando login\n -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+            
     
 def listar_mtr(id_user):
-    cusor.execute("SELECT nome_mtr FROM materias WHERE id_usuario = ? ",(id_user,))
+    cusor.execute("SELECT nome_mtr, flts_aluno , (crg_horaria * 0,25)as flts_possiveis FROM materias WHERE id_usuario = ? ",(id_user,))
     materias = cursor.fetchall()
     if materias:
-        for materia in materias:
-            print(materia[0])
+        for materia , faltas, faltas_possiveis in materias:
+            print(f"matéria: {materia} , faltas: {faltas} , ainda pode faltar: {faltas_possiveis}")
     else :
         print("nenhuma matéria encontrada")
 
@@ -79,24 +93,43 @@ def tirar_flt(id_user):
 
   
 
-def main_func():
-    id_user = None
+def main_func(id):
     while True:
+        listar_mtr(id)
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n 1- criar matéria \n 2- excluir matéria \n 3- adicionar falta \n 4- tirar falta \n")
+        sclh= input("qual operação deseja realizar:")
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-        print(f"1- login \n 2- cadastro")
-        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-        sclh= input("escolha operação: ")
+
+        
+
+
+
+conn = sqlite3.connect('usuarios.db')            
+cursor= conn.cursor
+cursor.execute("PRAGMA foreign_keys = ON;")
+cursor.execute( "CREATE TABLE usuarios (id INTERGER PRIMARY KEY AUTOINCREMENT , nome text not null, senha varchar not null)")
+cursor.execute("CREATE TABLE materias (id INTERGER PRIMARY KEY AUTOINCREMENT,nome_mtr TEXT NOT NULL,crg_horaria INTERGER NOT NULL,flts_aluno INTERGER NOT NULL, FOREING KEY (id_usuario) REFERENCE usuarios(id)")
 
 while True:
-    conn = sqlite3.connect('usuarios.db')            
-    cursor= conn.cursor
-    cursor.execute("PRAGMA foreign_keys = ON;")
-    cursor.execute( "CREATE TABLE usuarios (id INTERGER PRIMARY KEY AUTOINCREMENT , nome text not null, senha varchar not null)")
-    cursor.execute("CREATE TABLE materias (id INTERGER PRIMARY KEY AUTOINCREMENT,nome_mtr TEXT NOT NULL,crg_horaria INTERGER NOT NULL,flts_aluno INTERGER NOT NULL, FOREING KEY (id_usuario) REFERENCE usuarios(id)")
+    id_user = None
+    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+    print(f"1- login \n 2- cadastro")
+    sclh= input("escolha operação: ")
+    print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+    if sclh == 1 :
+            print("insira 0 para sair")
+            logar_user(id_user)
+            while not logar_user :
+                print("login invalido tente novamente ou digite 0 para sair")
+                logar_user(id_user)
+            main_func(id_user)
+    else:
+        print("insira 0 para sair")
+        cadastrar_user(id_user)
+        break
     
     
     
     
-    
-    conn.commit()
-    conn.close()
+conn.commit()
+conn.close()
