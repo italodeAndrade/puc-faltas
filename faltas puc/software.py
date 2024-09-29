@@ -3,6 +3,7 @@ import time
 import os
 import getpass
 import sqlite3
+import hashlib
 
 def cadastrar_user():
     usuario=input("insira o seu usuario: ")
@@ -17,6 +18,10 @@ def cadastrar_user():
         if usuario == 0 or senha == 0 :
             break
     if senha == senha2 :
+        senha_codificada=senha.encode('utf-8')
+        obj_sha=hashlib.sha256()
+        obj_sha.update(senha_codificada)
+        senha=obj_sha.hexdigest()
         cursor.execute(" INSERT INTO usuarios(nome, senha) values (? , ?)" , (usuario, senha))
         conn.commit()
     
@@ -25,6 +30,8 @@ def cadastrar_user():
 def logar_user(usuario, senha):
     lgn_vld = False
     try:
+        senha_codificada = hashlib.sha256(senha.encode('utf-8')).hexdigest()
+        senha=senha_codificada
         cursor.execute("SELECT id FROM usuarios WHERE nome = ? AND senha = ?", (usuario, senha))
         result = cursor.fetchone()  
         if result:  
@@ -39,11 +46,11 @@ def logar_user(usuario, senha):
             
     
 def listar_mtr(id_user):
-    cursor.execute("SELECT nome_mtr, flts_aluno , (crg_horaria * 0.25)as flts_possiveis FROM materias WHERE id_usuario = ? ",(id_user,))
+    cursor.execute("SELECT nome_mtr, flts_aluno , ((crg_horaria * 0.25) - flts_aluno)as pode_faltar, (crg_horaria * 0.25) as faltas_totais FROM materias WHERE id_usuario = ? ",(id_user,))
     materias = cursor.fetchall()
     if materias:
-        for materia , faltas, faltas_possiveis in materias:
-            print(f"matéria: {materia} , faltas: {faltas} , ainda pode faltar: {faltas_possiveis}")
+        for materia , faltas, pode_faltar,faltas_totais, in materias:
+            print(f"matéria: {materia} , faltas: {faltas} , ainda pode faltar: {pode_faltar}, faltas totais permitidas: {faltas_totais}")
     else :
         print("nenhuma matéria encontrada")
 
@@ -98,6 +105,14 @@ def main_func(id):
         if sclh == 0 :
             print("tchau!!")
             break
+        elif sclh == 1:
+            criar_mtr(id)
+        elif sclh == 2:
+            excluir_mtr(id)
+        elif sclh == 3:
+            add_flt(id)
+        elif sclh == 4:
+            tirar_flt(id)
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 
         
@@ -118,6 +133,12 @@ while True:
     print(f"pressione 0 para sair\n1- login \n2- cadastro")
     sclh= int(input("escolha operação: "))
     print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+    while sclh not in [0,1,2]:
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n !!NÃO EXISTE ESTA OPERAÇÃO ESCOLHA NOVAMENTE!!!")
+        print(f"pressione 0 para sair\n1- login \n2- cadastro")
+        sclh= int(input("escolha operação: "))
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+        
     if sclh == 1:
         usuario = input("insira o seu nome de usuario: ")
         if usuario == '0':
@@ -132,6 +153,8 @@ while True:
             continue
 
         main_func(id_user)
+
+
 
 
     elif sclh == 0:
