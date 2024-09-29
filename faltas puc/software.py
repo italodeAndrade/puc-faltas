@@ -5,7 +5,8 @@ import getpass
 import sqlite3
 
 def cadastrar_user():
-    usuario=input("insira o seu usuario")
+    usuario=input("insira o seu usuario: ")
+
     senha=getpass.getpass(prompt='insira a sua senha: ', stream=None)
     senha2= getpass.getpass(prompt='insira novamente sua senha: ', stream=None)
 
@@ -16,34 +17,29 @@ def cadastrar_user():
         if usuario == 0 or senha == 0 :
             break
     if senha == senha2 :
-        cursor.execute(" INSERT INTO usuarios values (? , ?)" , (usuario, senha))
+        cursor.execute(" INSERT INTO usuarios(nome, senha) values (? , ?)" , (usuario, senha))
+        conn.commit()
     
     
 
-def logar_user(id_user):
-    login_vld= False
-    usuario= (input("insira o seu nome de usuario: "))
-    senha = getpass.getpass(prompt='insira a sua senha: ', stream=None)
+def logar_user(usuario, senha):
+    lgn_vld = False
+    try:
+        cursor.execute("SELECT id FROM usuarios WHERE nome = ? AND senha = ?", (usuario, senha))
+        result = cursor.fetchone()  
+        if result:  
+            id_user = result[0]  
+            lgn_vld = True  
+            print(f"!! Bem-vindo, {usuario} !!")
+            return id_user, lgn_vld 
+    except Exception as e:
+        print(f"ocorreu um erro : {e}")
 
-    if usuario != 0 or senha != 0 :
-        try:
-            cursor.execute("SELECT * FROM usuarios WHERE nome = ?AND senha= ?"(usuario, senha))
-            if cursor.fetchone():
-                cursor.execute("SELECT id FROM usuarios WHERE nome = ?"(usuario,))
-                id_user=cursor.fetchone()
-                login_vld= True
-                print(f"!! bem vindo {usuario} !!")
-                return True
-            
-        except Exception as e:
-            print(f"ocorreu um erro : {e}")
-        return login_vld
-    else:
-        print("cancelando login\n -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+    return None, lgn_vld
             
     
 def listar_mtr(id_user):
-    cusor.execute("SELECT nome_mtr, flts_aluno , (crg_horaria * 0,25)as flts_possiveis FROM materias WHERE id_usuario = ? ",(id_user,))
+    cursor.execute("SELECT nome_mtr, flts_aluno , (crg_horaria * 0.25)as flts_possiveis FROM materias WHERE id_usuario = ? ",(id_user,))
     materias = cursor.fetchall()
     if materias:
         for materia , faltas, faltas_possiveis in materias:
@@ -96,8 +92,12 @@ def tirar_flt(id_user):
 def main_func(id):
     while True:
         listar_mtr(id)
-        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n 1- criar matéria \n 2- excluir matéria \n 3- adicionar falta \n 4- tirar falta \n")
-        sclh= input("qual operação deseja realizar:")
+        print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- \n 1- criar matéria \n 2- excluir matéria \n 3- adicionar falta \n 4- tirar falta \n 0-sair")
+        
+        sclh = int(input("qual operação deseja realizar: "))
+        if sclh == 0 :
+            print("tchau!!")
+            break
         print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 
         
@@ -105,31 +105,40 @@ def main_func(id):
 
 
 conn = sqlite3.connect('usuarios.db')            
-cursor= conn.cursor
+cursor= conn.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
-cursor.execute( "CREATE TABLE usuarios (id INTERGER PRIMARY KEY AUTOINCREMENT , nome text not null, senha varchar not null)")
-cursor.execute("CREATE TABLE materias (id INTERGER PRIMARY KEY AUTOINCREMENT,nome_mtr TEXT NOT NULL,crg_horaria INTERGER NOT NULL,flts_aluno INTERGER NOT NULL, FOREING KEY (id_usuario) REFERENCE usuarios(id)")
-
+'''
+CASO NÃO TENHA CRIADO AS TABELAS APENAS TIRAR DO COMENTARIO E APAGAR ESTA LINHA
+cursor.execute( "CREATE TABLE usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT , nome text not null, senha varchar not null)")
+cursor.execute("CREATE TABLE materias (id INTEGER PRIMARY KEY AUTOINCREMENT,nome_mtr TEXT NOT NULL,crg_horaria INTEGER NOT NULL,flts_aluno  NOT NULL,id_usuario INTEGER, FOREIGN KEY (id_usuario) REFERENCES usuarios(id))")
+'''
 while True:
-    id_user = None
+    id_user = 0
     print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-    print(f"1- login \n 2- cadastro")
-    sclh= input("escolha operação: ")
+    print(f"pressione 0 para sair\n1- login \n2- cadastro")
+    sclh= int(input("escolha operação: "))
     print("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-    if sclh == 1 :
-            print("insira 0 para sair")
-            logar_user(id_user)
-            while not logar_user :
-                print("login invalido tente novamente ou digite 0 para sair")
-                logar_user(id_user)
-            main_func(id_user)
+    if sclh == 1:
+        usuario = input("insira o seu nome de usuario: ")
+        if usuario == '0':
+            print("!!cancelando login!!")
+            continue
+
+        senha = getpass.getpass(prompt='insira a sua senha: ', stream=None)
+        id_user, lgn_vld = logar_user(usuario, senha) 
+
+        if not lgn_vld:
+            print("login inválido, tente novamente ou digite 0 para sair.")
+            continue
+
+        main_func(id_user)
+
+
+    elif sclh == 0:
+        print("até logo!!")
+        break
     else:
         print("insira 0 para sair")
-        cadastrar_user(id_user)
-        break
-    
-    
-    
-    
-conn.commit()
+        cadastrar_user()
+        
 conn.close()
